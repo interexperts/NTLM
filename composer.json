@@ -1,0 +1,8 @@
+{
+	"name": "interexperts/ntlm",
+	"autoload": {
+		"psr-4": {
+			"InterExperts\\": "src/"
+		}
+	}
+}

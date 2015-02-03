@@ -1,17 +1,13 @@
 <?php
 namespace InterExperts\NTLM;
 
-// loune 25/3/2006, 22/08/2009, 20/09/2009
-// For more information see:
-// http://siphon9.net/loune/2009/09/ntlm-authentication-in-php-now-with-ntlmv2-hash-checking/
-//
-
 /*
 
 php ntlm authentication library
 Version 1.2
 
 Copyright (c) 2009-2010 Loune Lam
+Modified by Niels de Blaauw | InterExperts
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,39 +26,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
-Usage:
-
-	include('ntlm.php');
-
-	function get_ntlm_user_hash($user) {
-		$userdb = array('loune'=>'test', 'user1'=>'password');
-		
-		if (!isset($userdb[strtolower($user)]))
-			return false;	
-		return ntlm_md4(ntlm_utf8_to_utf16le($userdb[strtolower($user)]));
-	}
-
-	session_start();
-	$auth = ntlm_prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local", "get_ntlm_user_hash");
-
-	if ($auth['authenticated']) {
-		print "You are authenticated as $auth[username] from $auth[domain]/$auth[workstation]";
-	}
-
-To logout, use the code:
-
-	ntlm_unset_auth();
-	
-SAMBA
------	
-To use this library with samba, please read the instructions inside verifyntlm.c 
-to compile the verifyntlm helper. Use the ntlm.php library as above but omit the
-get_ntlm_user_hash function and replace the ntlm_prompt line with this one:
-
-	$auth = ntlm_prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local", null, "ntlm_verify_hash_smb");
-	
-For more, see http://siphon9.net/loune/2010/12/php-ntlm-integration-with-samba/
 
 */
 
@@ -244,5 +207,3 @@ class NTLM{
 		$this->error = $message;
 	}
 }
-
-?>
