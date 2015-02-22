@@ -161,7 +161,7 @@ class NTLM{
 		return substr($clientAuthHeader, 0, 5) == 'NTLM ';
 	}
 
-	protected function sendPhaseTwoHeaders($msg)){
+	protected function sendPhaseTwoHeaders($msg, $targetname, $domain, $computer, $dnsdomain, $dnscomputer){
 		$_SESSION['_ntlm_server_challenge'] = $this->get_random_bytes(8);
 		header('HTTP/1.1 401 Unauthorized');
 		$msg2 = $this->get_challenge_msg($msg, $_SESSION['_ntlm_server_challenge'], $targetname, $domain, $computer, $dnsdomain, $dnscomputer);
@@ -193,6 +193,20 @@ class NTLM{
 		return substr($msg, 0, 8) == "NTLMSSP\x00";
 	}
 
+	/**
+     * @codeCoverageIgnore
+     */
+	protected function canGetHeadersFromApache(){
+		return function_exists('apache_request_headers');
+	}
+
+	/**
+     * @codeCoverageIgnore
+     */
+	protected function getApacheHeaders(){
+		return apache_request_headers();
+	}
+
 	public function prompt($targetname, $domain, $computer, $dnsdomain, $dnscomputer, $failmsg = "<h1>Authentication Required</h1>") {
 		if ($this->isAlreadyAuthenticated()){
 			return $_SESSION['_ntlm_auth'];
@@ -200,7 +214,12 @@ class NTLM{
 
 		$auth_header = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : null;
 
-		if (!$auth_header) {
+		if ($auth_header == null && $this->canGetHeadersFromApache()) {
+			$headers = $this->getApacheHeaders();
+			$auth_header = isset($headers['Authorization']) ? $headers['Authorization'] : null;
+		}
+
+		if (is_null($auth_header)) {
 			$this->beginChallenge();
 		}
 
@@ -208,12 +227,11 @@ class NTLM{
 			$msg = $this->extractClientMessage($auth_header);
 			if (!$this->isValidClientMessage($msg)) {
 				unset($_SESSION['_ntlm_post_data']);
-				throw new Exception('NTLM error header not recognised');
+				throw new \Exception('NTLM error header not recognised');
 			}
-
 			$phaseIdentifier = $msg[8];
 			if ($this->isPhaseOneIdentifier($phaseIdentifier)) {
-				$this->sendPhaseTwoHeaders($msg);
+				$this->sendPhaseTwoHeaders($msg, $targetname, $domain, $computer, $dnsdomain, $dnscomputer);
 			}elseif ($this->isPhaseThreeIdentifier($phaseIdentifier)) {
 				$this->parse_response_msg($msg, $_SESSION['_ntlm_server_challenge']);
 				unset($_SESSION['_ntlm_server_challenge']);
