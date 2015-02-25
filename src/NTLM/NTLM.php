@@ -36,6 +36,10 @@ class NTLM{
 	public $error = null;
 	public $user = null;
 
+	/**
+	 * Local variable may be used in custom verifyHash function
+	 * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+	 */
 	public function __construct(){
 		$this->verifyHash = function($challenge, $user, $domain, $workstation, $clientblobhash, $clientblob) {
 			$md4hash = call_user_func($this->getUserHash, $user);
@@ -71,21 +75,22 @@ class NTLM{
 		return iconv('UTF-8', 'UTF-16LE', $str);
 	}
 
-	public static function toMD4($s) {
-		return pack('H*', hash('md4', $s));
+	public static function toMD4($input) {
+		return pack('H*', hash('md4', $input));
 	}	
+
+	protected static function decode_utf16($input){
+		return iconv('UTF-16LE', 'UTF-8', $input);
+	}
 
 	protected function av_pair($type, $utf16) {
 		return pack('v', $type).pack('v', strlen($utf16)).$utf16;
 	}
-
-	protected function field_value($msg, $start, $decode_utf16 = true) {
+	
+	protected function field_value($msg, $start) {
 		$len = (ord($msg[$start+1]) * 256) + ord($msg[$start]);
 		$off = (ord($msg[$start+5]) * 256) + ord($msg[$start+4]);
 		$result = substr($msg, $off, $len);
-		if ($decode_utf16) {
-			$result = iconv('UTF-16LE', 'UTF-8', $result);
-		}
 		return $result;
 	}
 
@@ -110,8 +115,7 @@ class NTLM{
 	}
 
 	protected function get_challenge_msg($msg, $challenge, $targetname, $domain, $computer, $dnsdomain, $dnscomputer) {
-		$domain = $this->field_value($msg, 16);
-		$ws = $this->field_value($msg, 24);
+		$domain = self::decode_utf16($this->field_value($msg, 16));
 		$tdata = $this->av_pair(2, self::UTF8ToUTF16le($domain)).$this->av_pair(1, self::UTF8ToUTF16le($computer)).$this->av_pair(4, self::UTF8ToUTF16le($dnsdomain)).$this->av_pair(3, self::UTF8ToUTF16le($dnscomputer))."\0\0\0\0\0\0\0\0";
 		$tname = self::UTF8ToUTF16le($targetname);
 
@@ -126,10 +130,10 @@ class NTLM{
 	}
 
 	protected function parse_response_msg($msg, $challenge) {
-		$user = $this->field_value($msg, 36);
-		$domain = $this->field_value($msg, 28);
-		$workstation = $this->field_value($msg, 44);
-		$ntlmresponse = $this->field_value($msg, 20, false);
+		$user = self::decode_utf16($this->field_value($msg, 36));
+		$domain = self::decode_utf16($this->field_value($msg, 28));
+		$workstation = self::decode_utf16($this->field_value($msg, 44));
+		$ntlmresponse = $this->field_value($msg, 20);
 		$clientblob = substr($ntlmresponse, 16);
 		$clientblobhash = substr($ntlmresponse, 0, 16);
 
@@ -207,7 +211,7 @@ class NTLM{
 		return apache_request_headers();
 	}
 
-	public function prompt($targetname, $domain, $computer, $dnsdomain, $dnscomputer, $failmsg = "<h1>Authentication Required</h1>") {
+	public function prompt($targetname, $domain, $computer, $dnsdomain, $dnscomputer) {
 		if ($this->isAlreadyAuthenticated()){
 			return $_SESSION['_ntlm_auth'];
 		}
