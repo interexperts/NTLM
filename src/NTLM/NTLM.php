@@ -48,14 +48,14 @@ class NTLM{
 			}
 			$ntlmv2hash = $this->hmac_md5($md4hash, self::UTF8ToUTF16le(strtoupper($user).$domain));
 			$blobhash = $this->hmac_md5($ntlmv2hash, $challenge.$clientblob);
-			
+
 			return ($blobhash == $clientblobhash);
 		};
 
 		$this->getUserHash = function ($user) {
 			$userdb = array('admin'=>'admin');
 			if (!isset($userdb[strtolower($user)])){
-				return false;	
+				return false;
 			}
 			return self::toMD4(self::UTF8ToUTF16le($userdb[strtolower($user)]));
 		};
@@ -77,7 +77,7 @@ class NTLM{
 
 	public static function toMD4($input) {
 		return pack('H*', hash('md4', $input));
-	}	
+	}
 
 	protected static function decode_utf16($input){
 		return iconv('UTF-16LE', 'UTF-8', $input);
@@ -86,7 +86,7 @@ class NTLM{
 	protected function av_pair($type, $utf16) {
 		return pack('v', $type).pack('v', strlen($utf16)).$utf16;
 	}
-	
+
 	protected function field_value($msg, $start) {
 		$len = (ord($msg[$start+1]) * 256) + ord($msg[$start]);
 		$off = (ord($msg[$start+5]) * 256) + ord($msg[$start+4]);
@@ -99,7 +99,7 @@ class NTLM{
 		if (strlen($key) > $blocksize){
 			$key = pack('H*', md5($key));
 		}
-		
+
 		$key = str_pad($key, $blocksize, "\0");
 		$ipadk = $key ^ str_repeat("\x36", $blocksize);
 		$opadk = $key ^ str_repeat("\x5c", $blocksize);
@@ -142,7 +142,7 @@ class NTLM{
 			$this->error = 'NTLMv2 response required. Please force your client to use NTLMv2.';
 			return $this;
 		}
-		
+
 		$verified_hash = call_user_func($this->verifyHash, $challenge, $user, $domain, $workstation, $clientblobhash, $clientblob);
 
 		if (!$verified_hash){
@@ -239,11 +239,11 @@ class NTLM{
 			}elseif ($this->isPhaseThreeIdentifier($phaseIdentifier)) {
 				$this->parse_response_msg($msg, $_SESSION['_ntlm_server_challenge']);
 				unset($_SESSION['_ntlm_server_challenge']);
-				
+
 				if (!$this->is_authenticated) {
 					$this->defaultLoginError($this->error);
 				}
-				
+
 				$_SESSION['_ntlm_auth'] = $this;
 				return $this;
 			}
