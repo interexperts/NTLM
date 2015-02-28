@@ -29,18 +29,23 @@ THE SOFTWARE.
 
 */
 
+use \Bankiru\IPTools;
+
 class NTLM{
 	protected $verifyHash = null;
 	protected $getUserHash = null;
 	public $is_authenticated = false;
 	public $error = null;
 	public $user = null;
+	public $whitelist = null;
+	protected $remoteIP = null;
 
 	/**
 	 * Local variable may be used in custom verifyHash function
 	 * @SuppressWarnings(PHPMD.UnusedLocalVariable)
 	 */
 	public function __construct(){
+		$this->whitelist = new IPWhitelist();
 		$this->verifyHash = function($challenge, $user, $domain, $workstation, $clientblobhash, $clientblob) {
 			$md4hash = call_user_func($this->getUserHash, $user);
 			if (!$md4hash){
@@ -211,7 +216,15 @@ class NTLM{
 		return apache_request_headers();
 	}
 
+	public function setRemoteIP(IPTools\IP $remoteIP){
+		$this->remoteIP = $remoteIP;
+	}
+
 	public function prompt($targetname, $domain, $computer, $dnsdomain, $dnscomputer) {
+		if(!is_null($this->remoteIP) && !$this->whitelist->hasAccess($this->remoteIP)){
+			return $this->defaultLoginError();
+		}
+
 		if ($this->isAlreadyAuthenticated()){
 			return $_SESSION['_ntlm_auth'];
 		}
