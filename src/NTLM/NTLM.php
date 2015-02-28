@@ -173,7 +173,7 @@ class NTLM{
 	}
 
 	protected function sendPhaseTwoHeaders($msg, $targetname, $domain, $computer, $dnsdomain, $dnscomputer){
-		$_SESSION['_ntlm_server_challenge'] = $this->get_random_bytes(8);
+		$this->sessionManager->set('_ntlm_server_challenge', $this->get_random_bytes(8));
 		header('HTTP/1.1 401 Unauthorized');
 		$msg2 = $this->get_challenge_msg($msg, $this->sessionManager->get('_ntlm_server_challenge'), $targetname, $domain, $computer, $dnsdomain, $dnscomputer);
 		header('WWW-Authenticate: NTLM '.trim(base64_encode($msg2)));
@@ -193,7 +193,7 @@ class NTLM{
 	}
 
 	protected function isAlreadyAuthenticated(){
-		return !is_null($this->sessionManager->get(_ntlm_auth));
+		return !is_null($this->sessionManager->get('_ntlm_auth'));
 	}
 
 	protected function extractClientMessage($clientAuthHeader){
