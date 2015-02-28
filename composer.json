@@ -9,5 +9,8 @@
 		"phpunit/phpunit": "4.5.*",
 		"phpmd/phpmd" : "@stable",
 		"satooshi/php-coveralls": "dev-master"
+	},
+	"require": {
+		"bankiru/ip-tools": "~0.1"
 	}
 }
