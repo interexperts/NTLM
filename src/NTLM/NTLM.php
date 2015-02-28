@@ -38,6 +38,7 @@ class NTLM{
 	public $error = null;
 	public $user = null;
 	public $whitelist = null;
+	public $sessionManager = null;
 	protected $remoteIP = null;
 
 	/**
@@ -46,6 +47,7 @@ class NTLM{
 	 */
 	public function __construct(){
 		$this->whitelist = new IPWhitelist();
+		$this->sessionManager = new SessionManager();
 		$this->verifyHash = function($challenge, $user, $domain, $workstation, $clientblobhash, $clientblob) {
 			$md4hash = call_user_func($this->getUserHash, $user);
 			if (!$md4hash){
@@ -163,7 +165,7 @@ class NTLM{
 	}
 
 	public function ntlm_unset_auth() {
-		unset ($_SESSION['_ntlm_auth']);
+		$this->sessionManager->set('_ntlm_auth');
 	}
 
 	protected function clientHasAcceptedChallenge($clientAuthHeader){
@@ -173,7 +175,7 @@ class NTLM{
 	protected function sendPhaseTwoHeaders($msg, $targetname, $domain, $computer, $dnsdomain, $dnscomputer){
 		$_SESSION['_ntlm_server_challenge'] = $this->get_random_bytes(8);
 		header('HTTP/1.1 401 Unauthorized');
-		$msg2 = $this->get_challenge_msg($msg, $_SESSION['_ntlm_server_challenge'], $targetname, $domain, $computer, $dnsdomain, $dnscomputer);
+		$msg2 = $this->get_challenge_msg($msg, $this->sessionManager->get('_ntlm_server_challenge'), $targetname, $domain, $computer, $dnsdomain, $dnscomputer);
 		header('WWW-Authenticate: NTLM '.trim(base64_encode($msg2)));
 	}
 
@@ -191,7 +193,7 @@ class NTLM{
 	}
 
 	protected function isAlreadyAuthenticated(){
-		return isset($_SESSION['_ntlm_auth']);
+		return !is_null($this->sessionManager->get(_ntlm_auth));
 	}
 
 	protected function extractClientMessage($clientAuthHeader){
@@ -226,12 +228,12 @@ class NTLM{
 		}
 
 		if ($this->isAlreadyAuthenticated()){
-			return $_SESSION['_ntlm_auth'];
+			return $this->sessionManager->get('_ntlm_auth');
 		}
 
 		$auth_header = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : null;
 
-		if ($auth_header == null && $this->canGetHeadersFromApache()) {
+		if (is_null($auth_header) && $this->canGetHeadersFromApache()) {
 			$headers = $this->getApacheHeaders();
 			$auth_header = isset($headers['Authorization']) ? $headers['Authorization'] : null;
 		}
@@ -243,21 +245,19 @@ class NTLM{
 		if ($this->clientHasAcceptedChallenge($auth_header)) {
 			$msg = $this->extractClientMessage($auth_header);
 			if (!$this->isValidClientMessage($msg)) {
-				unset($_SESSION['_ntlm_post_data']);
 				throw new \Exception('NTLM error header not recognised');
 			}
 			$phaseIdentifier = $msg[8];
 			if ($this->isPhaseOneIdentifier($phaseIdentifier)) {
 				$this->sendPhaseTwoHeaders($msg, $targetname, $domain, $computer, $dnsdomain, $dnscomputer);
 			}elseif ($this->isPhaseThreeIdentifier($phaseIdentifier)) {
-				$this->parse_response_msg($msg, $_SESSION['_ntlm_server_challenge']);
-				unset($_SESSION['_ntlm_server_challenge']);
+				$this->parse_response_msg($msg, $this->sessionManager->get('_ntlm_server_challenge'));
+				$this->sessionManager->set('_ntlm_server_challenge');
 
 				if (!$this->is_authenticated) {
 					$this->defaultLoginError($this->error);
 				}
-
-				$_SESSION['_ntlm_auth'] = $this;
+				$this->sessionManager->set('_ntlm_auth', $this);
 				return $this;
 			}
 		}

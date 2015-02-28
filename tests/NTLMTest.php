@@ -1,7 +1,7 @@
 <?php
 
 class NTLMTest extends \PHPUnit_Framework_TestCase {
-    public function testStringToMD4(){	
+    public function testStringToMD4(){
         $this->assertEquals(pack("H*", "ef9283d532ca7d2bcb0ea119cef0ec15"), \InterExperts\NTLM\NTLM::toMD4('knownString'));
     }
 
@@ -27,7 +27,6 @@ class NTLMTest extends \PHPUnit_Framework_TestCase {
 
     public function testShouldAcceptTransactionThenFail(){
     	$_SERVER['HTTP_AUTHORIZATION'] = 'notEmpty';
-    	$_SESSION['_ntlm_post_data'] = 'test';
 
     	$ntlm = $this->getMockBuilder('\InterExperts\NTLM\NTLM')
     	             ->setMethods(array('clientHasAcceptedChallenge'))
@@ -38,7 +37,7 @@ class NTLMTest extends \PHPUnit_Framework_TestCase {
     	     ->will($this->returnValue(TRUE));
 
     	$this->setExpectedException('Exception', 'NTLM error header not recognised');
-
+        $ntlm->sessionManager->set('_ntlm_post_data', 'test');
     	$ntlm->prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local");
     }
 
@@ -119,11 +118,9 @@ class NTLMTest extends \PHPUnit_Framework_TestCase {
     	     ->method('isPhaseThreeIdentifier')
     	     ->will($this->returnValue(true));
 
-    	$_SESSION['_ntlm_server_challenge'] = 'test';
-
     	$ntlm->expects($this->once())
     	     ->method('parse_response_msg');
-
+        $ntlm->sessionManager->set('_ntlm_post_data', 'test');
     	$ntlm->prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local");
     }
 
@@ -132,7 +129,6 @@ class NTLMTest extends \PHPUnit_Framework_TestCase {
      */
     public function testPhaseThreeLogsIn(){
     	$_SERVER['HTTP_AUTHORIZATION'] = 'NTLM TlRMTVNTUAADAAAAGAAYAG4AAAASARIBhgAAAAYABgBYAAAACgAKAF4AAAAGAAYAaAAAAAAAAACYAQAABQKAAgYDgCUAAAAP5VQScilF+FdimsHOnQS7fk4AQgBMAGEAZABtAGkAbgBOAEIATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPXUvNaz0xMZF9AAySpcl2AQEAAAAAAAB1+1LJ507QAeCrR1SzQl4pAAAAAAIAAAABABQAbQB5AGMAbwBtAHAAdQB0AGUAcgAEACAAdABlAHMAdABkAG8AbQBhAGkAbgAuAGwAbwBjAGEAbAADACAAbQB5AGMAbwBtAHAAdQB0AGUAcgAuAGwAbwBjAGEAbAAIADAAMAAAAAAAAAABAAAAACAAAKZQUgL77gVAvoZTBPma52m1ag8i/CLRhvKkIk0MQSZBCgAQAAAAAAAAAAAAAAAAAAAAAAAJACoASABUAFQAUAAvAG4AdABsAG0ALgBsAGkAYgByAGEAcgB5AC4AZABlAHYAAAAAAAAAAAAAAAAA';
-    	$_SESSION['_ntlm_server_challenge'] = 'test';
     	$ntlm = new \InterExperts\NTLM\NTLM();
 
 		$verify_hash = function(){
@@ -145,7 +141,7 @@ class NTLMTest extends \PHPUnit_Framework_TestCase {
 
 		$ntlm->setVerifyHashMethod($verify_hash);
 		$ntlm->setGetUserHashMethod($get_user_hash);
-
+        $ntlm->sessionManager->set('_ntlm_post_data', 'test');
     	$ntlm->prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local");
     	$this->assertTrue($ntlm->is_authenticated);
     }
@@ -155,7 +151,6 @@ class NTLMTest extends \PHPUnit_Framework_TestCase {
      */
     public function testPhaseThreeFailsWithBadHashVerification(){
     	$_SERVER['HTTP_AUTHORIZATION'] = 'NTLM TlRMTVNTUAADAAAAGAAYAG4AAAASARIBhgAAAAYABgBYAAAACgAKAF4AAAAGAAYAaAAAAAAAAACYAQAABQKAAgYDgCUAAAAP5VQScilF+FdimsHOnQS7fk4AQgBMAGEAZABtAGkAbgBOAEIATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPXUvNaz0xMZF9AAySpcl2AQEAAAAAAAB1+1LJ507QAeCrR1SzQl4pAAAAAAIAAAABABQAbQB5AGMAbwBtAHAAdQB0AGUAcgAEACAAdABlAHMAdABkAG8AbQBhAGkAbgAuAGwAbwBjAGEAbAADACAAbQB5AGMAbwBtAHAAdQB0AGUAcgAuAGwAbwBjAGEAbAAIADAAMAAAAAAAAAABAAAAACAAAKZQUgL77gVAvoZTBPma52m1ag8i/CLRhvKkIk0MQSZBCgAQAAAAAAAAAAAAAAAAAAAAAAAJACoASABUAFQAUAAvAG4AdABsAG0ALgBsAGkAYgByAGEAcgB5AC4AZABlAHYAAAAAAAAAAAAAAAAA';
-    	$_SESSION['_ntlm_server_challenge'] = 'test';
     	$ntlm = new \InterExperts\NTLM\NTLM();
 
 		$verify_hash = function(){
@@ -168,14 +163,13 @@ class NTLMTest extends \PHPUnit_Framework_TestCase {
 
 		$ntlm->setVerifyHashMethod($verify_hash);
 		$ntlm->setGetUserHashMethod($get_user_hash);
-
+        $ntlm->sessionManager->set('_ntlm_post_data', 'test');
     	$ntlm->prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local");
     	$this->assertFalse($ntlm->is_authenticated);
     }
 
     public function testPhaseThreeDetectsInvalidNTLM(){
     	$_SERVER['HTTP_AUTHORIZATION'] = 'NTLM TlRMTVNTUAADAAAAGAAYAG4AAAASARIBhgAAAAYABgBYAAAACgAKAF4AAAAGAAYAaAAAAAAAAACYAQAABQKAAgYDgCUAAAAP5VQScilF+FdimsHOnQS7fk4AQgBMAGEAZABtAGkAbgBOAEIATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPXUvNazAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
-    	$_SESSION['_ntlm_server_challenge'] = 'test';
     	$ntlm = new \InterExperts\NTLM\NTLM();
 
 		$verify_hash = function(){
@@ -188,67 +182,66 @@ class NTLMTest extends \PHPUnit_Framework_TestCase {
 
 		$ntlm->setVerifyHashMethod($verify_hash);
 		$ntlm->setGetUserHashMethod($get_user_hash);
-
+        $ntlm->sessionManager->set('_ntlm_post_data', 'test');
     	$ntlm->prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local");
     	$this->assertFalse($ntlm->is_authenticated);
     }
 
     public function testPhaseThreeDefaultHashVerification(){
     	$_SERVER['HTTP_AUTHORIZATION'] = 'NTLM TlRMTVNTUAADAAAAGAAYAG4AAAASARIBhgAAAAYABgBYAAAACgAKAF4AAAAGAAYAaAAAAAAAAACYAQAABQKAAgYDgCUAAAAP5VQScilF+FdimsHOnQS7fk4AQgBMAGEAZABtAGkAbgBOAEIATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPXUvNaz0xMZF9AAySpcl2AQEAAAAAAAB1+1LJ507QAeCrR1SzQl4pAAAAAAIAAAABABQAbQB5AGMAbwBtAHAAdQB0AGUAcgAEACAAdABlAHMAdABkAG8AbQBhAGkAbgAuAGwAbwBjAGEAbAADACAAbQB5AGMAbwBtAHAAdQB0AGUAcgAuAGwAbwBjAGEAbAAIADAAMAAAAAAAAAABAAAAACAAAKZQUgL77gVAvoZTBPma52m1ag8i/CLRhvKkIk0MQSZBCgAQAAAAAAAAAAAAAAAAAAAAAAAJACoASABUAFQAUAAvAG4AdABsAG0ALgBsAGkAYgByAGEAcgB5AC4AZABlAHYAAAAAAAAAAAAAAAAA';
-    	$_SESSION['_ntlm_server_challenge'] = 'test';
+
     	$ntlm = new \InterExperts\NTLM\NTLM();
 		$get_user_hash = function ($user) {
 			return true;
 		};
 
 		$ntlm->setGetUserHashMethod($get_user_hash);
-
+        $ntlm->sessionManager->set('_ntlm_post_data', 'test');
     	$ntlm->prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local");
     	$this->assertFalse($ntlm->is_authenticated);
     }
 
     public function testPhaseThreeDefaultWontLogInWithWrongGetHashFunction(){
     	$_SERVER['HTTP_AUTHORIZATION'] = 'NTLM TlRMTVNTUAADAAAAGAAYAG4AAAASARIBhgAAAAYABgBYAAAACgAKAF4AAAAGAAYAaAAAAAAAAACYAQAABQKAAgYDgCUAAAAP5VQScilF+FdimsHOnQS7fk4AQgBMAGEAZABtAGkAbgBOAEIATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPXUvNaz0xMZF9AAySpcl2AQEAAAAAAAB1+1LJ507QAeCrR1SzQl4pAAAAAAIAAAABABQAbQB5AGMAbwBtAHAAdQB0AGUAcgAEACAAdABlAHMAdABkAG8AbQBhAGkAbgAuAGwAbwBjAGEAbAADACAAbQB5AGMAbwBtAHAAdQB0AGUAcgAuAGwAbwBjAGEAbAAIADAAMAAAAAAAAAABAAAAACAAAKZQUgL77gVAvoZTBPma52m1ag8i/CLRhvKkIk0MQSZBCgAQAAAAAAAAAAAAAAAAAAAAAAAJACoASABUAFQAUAAvAG4AdABsAG0ALgBsAGkAYgByAGEAcgB5AC4AZABlAHYAAAAAAAAAAAAAAAAA';
-    	$_SESSION['_ntlm_server_challenge'] = 'test';
+
     	$ntlm = new \InterExperts\NTLM\NTLM();
 		$get_user_hash = function ($user) {
 			return false;
 		};
 
 		$ntlm->setGetUserHashMethod($get_user_hash);
-
+        $ntlm->sessionManager->set('_ntlm_post_data', 'test');
     	$ntlm->prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local");
     	$this->assertFalse($ntlm->is_authenticated);
     }
 
 	public function testHMACWithShortKey(){
     	$_SERVER['HTTP_AUTHORIZATION'] = 'NTLM TlRMTVNTUAADAAAAGAAYAG4AAAASARIBhgAAAAYABgBYAAAACgAKAF4AAAAGAAYAaAAAAAAAAACYAQAABQKAAgYDgCUAAAAP5VQScilF+FdimsHOnQS7fk4AQgBMAGEAZABtAGkAbgBOAEIATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPXUvNaz0xMZF9AAySpcl2AQEAAAAAAAB1+1LJ507QAeCrR1SzQl4pAAAAAAIAAAABABQAbQB5AGMAbwBtAHAAdQB0AGUAcgAEACAAdABlAHMAdABkAG8AbQBhAGkAbgAuAGwAbwBjAGEAbAADACAAbQB5AGMAbwBtAHAAdQB0AGUAcgAuAGwAbwBjAGEAbAAIADAAMAAAAAAAAAABAAAAACAAAKZQUgL77gVAvoZTBPma52m1ag8i/CLRhvKkIk0MQSZBCgAQAAAAAAAAAAAAAAAAAAAAAAAJACoASABUAFQAUAAvAG4AdABsAG0ALgBsAGkAYgByAGEAcgB5AC4AZABlAHYAAAAAAAAAAAAAAAAA';
-    	$_SESSION['_ntlm_server_challenge'] = 'test';
+
     	$ntlm = new \InterExperts\NTLM\NTLM();
 		$get_user_hash = function ($user) {
 			return '1234567890123456789012345678901234567890123456789012345678901234567890';
 		};
 
 		$ntlm->setGetUserHashMethod($get_user_hash);
-
+        $ntlm->sessionManager->set('_ntlm_post_data', 'test');
     	$ntlm->prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local");
     	$this->assertFalse($ntlm->is_authenticated);
     }
 
     public function testDefaultGetHash(){
     	$_SERVER['HTTP_AUTHORIZATION'] = 'NTLM TlRMTVNTUAADAAAAGAAYAG4AAAASARIBhgAAAAYABgBYAAAACgAKAF4AAAAGAAYAaAAAAAAAAACYAQAABQKAAgYDgCUAAAAP5VQScilF+FdimsHOnQS7fk4AQgBMAGEAZABtAGkAbgBOAEIATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPXUvNaz0xMZF9AAySpcl2AQEAAAAAAAB1+1LJ507QAeCrR1SzQl4pAAAAAAIAAAABABQAbQB5AGMAbwBtAHAAdQB0AGUAcgAEACAAdABlAHMAdABkAG8AbQBhAGkAbgAuAGwAbwBjAGEAbAADACAAbQB5AGMAbwBtAHAAdQB0AGUAcgAuAGwAbwBjAGEAbAAIADAAMAAAAAAAAAABAAAAACAAAKZQUgL77gVAvoZTBPma52m1ag8i/CLRhvKkIk0MQSZBCgAQAAAAAAAAAAAAAAAAAAAAAAAJACoASABUAFQAUAAvAG4AdABsAG0ALgBsAGkAYgByAGEAcgB5AC4AZABlAHYAAAAAAAAAAAAAAAAA';
-    	$_SESSION['_ntlm_server_challenge'] = 'test';
+
     	$ntlm = new \InterExperts\NTLM\NTLM();
-    	
+        $ntlm->sessionManager->set('_ntlm_post_data', 'test');
     	$ntlm->prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local");
     	$this->assertFalse($ntlm->is_authenticated);
     }
 
     public function testDefaultGetHashWrongUsername(){
     	$_SERVER['HTTP_AUTHORIZATION'] = 'NTLM TlRMTVNTUAADAAAAGAAYAG4AAAASARIBhgAAAAYABgBYAAAACgAKaa4AAAAGAAYAaAAAAAAAAACYAQAABQKAAgYDgCUAAAAP5VQScilF+FdimsHOnQS7fk4AQgBMAGEAZABtAGkAbgBOAEIATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPXUvNaz0xMZF9AAySpcl2AQEAAAAAAAB1+1LJ507QAeCrR1SzQl4pAAAAAAIAAAABABQAbQB5AGMAbwBtAHAAdQB0AGUAcgAEACAAdABlAHMAdABkAG8AbQBhAGkAbgAuAGwAbwBjAGEAbAADACAAbQB5AGMAbwBtAHAAdQB0AGUAcgAuAGwAbwBjAGEAbAAIADAAMAAAAAAAAAABAAAAACAAAKZQUgL77gVAvoZTBPma52m1ag8i/CLRhvKkIk0MQSZBCgAQAAAAAAAAAAAAAAAAAAAAAAAJACoASABUAFQAUAAvAG4AdABsAG0ALgBsAGkAYgByAGEAcgB5AC4AZABlAHYAAAAAAAAAAAAAAAAA';
-    	$_SESSION['_ntlm_server_challenge'] = 'test';
     	$ntlm = new \InterExperts\NTLM\NTLM();
-    	
+        $ntlm->sessionManager->set('_ntlm_post_data', 'test');
     	$ntlm->prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local");
     	$this->assertFalse($ntlm->is_authenticated);
     }
@@ -262,14 +255,13 @@ class NTLMTest extends \PHPUnit_Framework_TestCase {
     	     ->method('isAlreadyAuthenticated')
     	     ->will($this->returnValue(true));
 
-    	$_SESSION['_ntlm_auth'] = 'test';
-
+        $ntlm->sessionManager->set('_ntlm_auth', 'test');
     	$this->assertEquals('test', $ntlm->prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local"));
     }
 
     public function testCanLogOut(){
-    	$_SESSION['_ntlm_auth'] = true;
     	$ntlm = new \InterExperts\NTLM\NTLM();
+    	$ntlm->sessionManager->set('_ntlm_auth', 'test');
     	$ntlm->ntlm_unset_auth();
     	$this->assertFalse(isset($_SESSION['_ntlm_auth']));
     }
