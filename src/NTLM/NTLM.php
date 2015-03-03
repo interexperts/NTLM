@@ -228,7 +228,9 @@ class NTLM{
 		}
 
 		if ($this->isAlreadyAuthenticated()){
-			return $this->sessionManager->get('_ntlm_auth');
+			$this->is_authenticated = true;
+			$this->user = $this->sessionManager->get('_ntlm_auth');
+			return $this;
 		}
 
 		$auth_header = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : null;
@@ -257,7 +259,7 @@ class NTLM{
 				if (!$this->is_authenticated) {
 					$this->defaultLoginError($this->error);
 				}
-				$this->sessionManager->set('_ntlm_auth', $this);
+				$this->sessionManager->set('_ntlm_auth', $this->user);
 				return $this;
 			}
 		}
