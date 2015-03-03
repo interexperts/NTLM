@@ -177,11 +177,13 @@ class NTLM{
 		header('HTTP/1.1 401 Unauthorized');
 		$msg2 = $this->get_challenge_msg($msg, $this->sessionManager->get('_ntlm_server_challenge'), $targetname, $domain, $computer, $dnsdomain, $dnscomputer);
 		header('WWW-Authenticate: NTLM '.trim(base64_encode($msg2)));
+		die();
 	}
 
 	protected function beginChallenge(){
 		header('HTTP/1.1 401 Unauthorized');
 		header('WWW-Authenticate: NTLM');
+		die();
 	}
 
 	protected function isPhaseOneIdentifier($phaseIdentifier){
