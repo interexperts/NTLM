@@ -246,20 +246,6 @@ class NTLMTest extends \PHPUnit_Framework_TestCase {
     	$this->assertFalse($ntlm->is_authenticated);
     }
 
-    public function testReturnsIfAlreadyLoggedIn(){
-    	$ntlm = $this->getMockBuilder('\InterExperts\NTLM\NTLM')
-    	             ->setMethods(array('isAlreadyAuthenticated'))
-    	             ->getMock();
-
-    	$ntlm->expects($this->once())
-    	     ->method('isAlreadyAuthenticated')
-    	     ->will($this->returnValue(true));
-
-        $ntlm->sessionManager->set('_ntlm_auth', new \InterExperts\NTLM\NTLMUser('test', 'testDomain', 'testWorkstation'));
-        $ntlm->prompt("testwebsite", "testdomain", "mycomputer", "testdomain.local", "mycomputer.local");
-    	$this->assertInstanceOf('\InterExperts\NTLM\NTLMUser', $ntlm->user);
-    }
-
     public function testCanLogOut(){
     	$ntlm = new \InterExperts\NTLM\NTLM();
     	$ntlm->sessionManager->set('_ntlm_auth', 'test');
