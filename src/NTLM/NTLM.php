@@ -194,9 +194,6 @@ class NTLM{
 		return $phaseIdentifier == "\x03";
 	}
 
-	protected function isAlreadyAuthenticated(){
-		return !is_null($this->sessionManager->get('_ntlm_auth'));
-	}
 
 	protected function extractClientMessage($clientAuthHeader){
 		return base64_decode(substr($clientAuthHeader, 5));
