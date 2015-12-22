@@ -2,3 +2,4 @@ vendor/
 phpunit.xml
 .c9/
 build/
+phpunit.xml
