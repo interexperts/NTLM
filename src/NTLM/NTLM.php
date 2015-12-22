@@ -172,6 +172,10 @@ class NTLM{
 		return substr($clientAuthHeader, 0, 5) == 'NTLM ';
 	}
 
+	/**
+     * @codeCoverageIgnore
+     * Handshake is not tested at this moment.
+     */
 	protected function sendPhaseTwoHeaders($msg, $targetname, $domain, $computer, $dnsdomain, $dnscomputer){
 		$this->sessionManager->set('_ntlm_server_challenge', $this->get_random_bytes(8));
 		header('HTTP/1.1 401 Unauthorized');
@@ -180,6 +184,10 @@ class NTLM{
 		die();
 	}
 
+	/**
+     * @codeCoverageIgnore
+     * Handshake is not tested at this moment.
+     */
 	protected function beginChallenge(){
 		header('HTTP/1.1 401 Unauthorized');
 		header('WWW-Authenticate: NTLM');
