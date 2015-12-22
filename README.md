@@ -1,7 +1,8 @@
 # NTLM
 PHP based NTLM authentication library
 
-Based on [loune/php-ntlm](https://github.com/loune/php-ntlm).
+Based on [loune/php-ntlm](https://github.com/loune/php-ntlm). Used in
+InterExperts [Adressen Beheer Systeem](http://www.adressenbeheersysteem.nl).
 
 [![Build Status](https://travis-ci.org/interexperts/NTLM.svg)](https://travis-ci.org/interexperts/NTLM)
 [![Coverage Status](https://coveralls.io/repos/interexperts/NTLM/badge.svg)](https://coveralls.io/r/interexperts/NTLM)
@@ -11,7 +12,4 @@ Based on [loune/php-ntlm](https://github.com/loune/php-ntlm).
 - Object Oriented implementation of Loune's NTLM library.
 - Composer support
 - 100% unit tested
-
-## Roadmap
-- Documentation of public functions
-- IP whitelists
+- IP whitelisting
