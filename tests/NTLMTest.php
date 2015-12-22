@@ -247,9 +247,26 @@ class NTLMTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testCanLogOut(){
-    	$ntlm = new \InterExperts\NTLM\NTLM();
-    	$ntlm->sessionManager->set('_ntlm_auth', 'test');
-    	$ntlm->ntlm_unset_auth();
-    	$this->assertFalse(isset($_SESSION['_ntlm_auth']));
+        $ntlm = new \InterExperts\NTLM\NTLM();
+        $ntlm->sessionManager->set('_ntlm_auth', 'test');
+        $ntlm->ntlm_unset_auth();
+        $this->assertFalse(isset($_SESSION['_ntlm_auth']));
+    }
+
+    public function testCanGetRandomBytes(){
+        $testMethod = new ReflectionMethod('\InterExperts\NTLM\NTLM', 'get_random_bytes');
+        $testMethod->setAccessible(true);
+        $this->assertNotEquals($testMethod->invoke(new \InterExperts\NTLM\NTLM(),10), $testMethod->invoke(new \InterExperts\NTLM\NTLM(), 10));
+        $this->assertEquals(8, strlen($testMethod->invoke(new \InterExperts\NTLM\NTLM(), 8)));
+        $this->assertEquals(4, strlen($testMethod->invoke(new \InterExperts\NTLM\NTLM(), 4)));
+    }
+
+    public function testCanGetChallengeMessage(){
+        $testMethod = new ReflectionMethod('\InterExperts\NTLM\NTLM', 'get_challenge_msg');
+        $testMethod->setAccessible(true);
+        $this->assertSame('4e544c4d5353500002000000140014003000000001028100313233340000000000000000680068004400000074006500730074005400610072006700650074000200000001001800740065007300740043006f006d007000750074006500720004001a00740065007300740044004e00530044006f006d00610069006e0003001e00740065007300740044004e00530043006f006d00700075007400650072000000000000000000'
+, bin2hex($testMethod->invoke(new \InterExperts\NTLM\NTLM(), \InterExperts\NTLM\NTLM::UTF8ToUTF16le('testMessage'), '1234', 'testTarget', 'testDomain', 'testComputer', 'testDNSDomain', 'testDNSComputer')));
+        $this->assertSame('4e544c4d53535000020000001600160030000000010281003536373800000000000000006e006e0046000000740065007300740054006100720067006500740032000200000001001a00740065007300740043006f006d0070007500740065007200320004001c00740065007300740044004e00530044006f006d00610069006e00320003002000740065007300740044004e00530043006f006d007000750074006500720032000000000000000000'
+, bin2hex($testMethod->invoke(new \InterExperts\NTLM\NTLM(), \InterExperts\NTLM\NTLM::UTF8ToUTF16le('testMessage2'), '5678', 'testTarget2', 'testDomain2', 'testComputer2', 'testDNSDomain2', 'testDNSComputer2')));
     }
 }
